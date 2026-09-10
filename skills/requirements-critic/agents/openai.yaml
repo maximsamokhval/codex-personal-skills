@@ -1,0 +1,3 @@
+interface:
+  display_name: "Requirements Critic"
+  short_description: "Find ambiguity and contradictions before approval"

@@ -1,0 +1,3 @@
+interface:
+  display_name: "Requirements Extract"
+  short_description: "Extract a source-grounded requirements model"

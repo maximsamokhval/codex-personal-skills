@@ -1,0 +1,3 @@
+interface:
+  display_name: "Specification Compiler"
+  short_description: "Compile approved requirements into INV, AC, and FAIL"
