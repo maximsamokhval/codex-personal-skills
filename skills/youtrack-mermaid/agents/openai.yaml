@@ -1,0 +1,5 @@
+interface:
+  display_name: "YouTrack Mermaid"
+  short_description: "Охайні Mermaid-схеми для статей YouTrack"
+  brand_color: "#2563EB"
+  default_prompt: "Use $youtrack-mermaid to create or improve a Mermaid diagram in my YouTrack article."

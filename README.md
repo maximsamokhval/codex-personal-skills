@@ -11,6 +11,7 @@
 | requirements-extract | витяг вимог із джерел |
 | requirements-critic | незалежна критика вимог |
 | specification-compiler | REQ → INV / AC / FAIL |
+| youtrack-mermaid | Mermaid-схеми для статей YouTrack |
 
 `python-project-harness` не включено: його не знайдено у локальному джерелі під час створення репозиторію.
 
@@ -80,4 +81,3 @@ push
 - Project-specific skills не належать до цього репозиторію.
 
 Детальні критерії розмежування наведено у [docs/skill-development.md](docs/skill-development.md).
-

@@ -17,6 +17,7 @@ requirements-extract
 requirements-critic
 specification-compiler
 python-project-harness
+youtrack-mermaid
 ```
 
 Перед додаванням перевірте, що skill не залежить від одного репозиторію, клієнта, середовища, облікових даних або недоступних іншим машинам абсолютних шляхів.
