@@ -12,6 +12,7 @@
 | requirements-critic | незалежна критика вимог |
 | specification-compiler | REQ → INV / AC / FAIL |
 | youtrack-mermaid | Mermaid-схеми для статей YouTrack |
+| iso-29148-requirements | витяг, нормалізація та трасування вимог за практичною методикою ISO/IEC/IEEE 29148 |
 
 `python-project-harness` не включено: його не знайдено у локальному джерелі під час створення репозиторію.
 

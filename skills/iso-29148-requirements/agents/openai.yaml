@@ -1,0 +1,7 @@
+interface:
+  display_name: "ISO 29148 Requirements"
+  short_description: "Extract and normalize traceable requirements"
+  default_prompt: "Use $iso-29148-requirements to extract and normalize requirements from these materials."
+
+policy:
+  allow_implicit_invocation: true
