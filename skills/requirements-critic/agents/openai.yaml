@@ -1,3 +1,4 @@
 interface:
   display_name: "Requirements Critic"
-  short_description: "Find ambiguity and contradictions before approval"
+  short_description: "Review requirements JSON before approval"
+  default_prompt: "Use $requirements-critic to review requirements.json, preserve it unchanged, and create review.json."

@@ -1,120 +1,80 @@
 ---
 name: specification-compiler
-description: Compile approved, traceable requirements into invariants, observable acceptance criteria, and failure scenarios. Use only after unresolved requirements and blocking review findings have been explicitly resolved or accepted.
+description: Compile an explicitly approved requirements/v1 baseline into editable specification.json and generated specification.md with traceable invariants, acceptance criteria, failure scenarios, and gaps. Use as the third stage after requirements criticism and human approval.
 ---
 
 # Specification Compiler
 
-Convert an approved requirements model into verification-ready artifacts while preserving traceability.
-
-This is a compiler, not a requirements author. It must not invent behavior, resolve business ambiguity, or silently expand scope.
+Compile an approved requirements model into verification-ready `requirements-specification/v1` artifacts. This is a compiler, not a requirements author: insufficient input becomes a `GAP-*`, never invented behavior.
 
 ## Output language
 
 - Produce all natural-language output in Ukrainian.
-- Do not switch to the language of the source material.
-- Preserve exact source quotations in their original language when required for traceability.
-- Do not translate requirement IDs, code, API names, file names, commands, protocol names, or machine-readable values.
+- Preserve source quotations when required for traceability.
+- Preserve IDs, code, API names, file names, commands, protocols, and machine-readable values.
+
+## Inputs and artifacts
+
+Use project-defined locations. Otherwise use:
+
+- `docs/requirements/requirements.json`;
+- `docs/requirements/review.json`;
+- `docs/requirements/baseline.json`;
+- `docs/requirements/specification.json` — editable source of truth;
+- `docs/requirements/specification.md` — generated view.
+
+Read all bundled contracts before compiling:
+
+- [requirements.schema.json](references/contracts/requirements.schema.json);
+- [review.schema.json](references/contracts/review.schema.json);
+- [baseline.schema.json](references/contracts/baseline.schema.json);
+- [specification.schema.json](references/contracts/specification.schema.json).
 
 ## Entry gate
 
-Before compiling, locate the requirements baseline defined by the project instructions.
+Run the deterministic gate before drafting output:
 
-If no project-specific location is defined, use:
+```text
+python "<skill-dir>/scripts/pipeline_artifacts.py" gate --requirements "<requirements.json>" --review "<review.json>" --baseline "<baseline.json>"
+```
 
-`docs/requirements/baseline.yaml`
+The gate must pass. It verifies supported contracts, structural and referential integrity, explicit approval, zero open blockers, no unresolved open items, matching versions, and current SHA-256 values. If it fails, stop and report every failed condition. Do not infer approval from file names, previous conversations, task completion, or the existence of artifacts.
 
-The baseline must contain:
+## Compilation workflow
 
-- `version`;
-- `status`;
-- `approved_by`;
-- `approved_at`;
-- `requirements_file`;
-- `requirements_sha256`;
-- `open_blockers`.
+1. Run the entry gate.
+2. Calculate the requirements and baseline digests with the `digest` command.
+3. Build a staged `requirements-specification/v1` JSON containing those exact hashes.
+4. Validate structure, hashes, and source requirement references:
 
-The gate passes only when:
+   ```text
+   python "<skill-dir>/scripts/pipeline_artifacts.py" validate specification "<staged-specification.json>" --requirements "<requirements.json>" --baseline "<baseline.json>"
+   ```
 
-- `status` is exactly `approved`;
-- `approved_by` is present;
-- `approved_at` is present;
-- the requirements file exists;
-- the current SHA-256 of the requirements file equals `requirements_sha256`;
-- `open_blockers` equals `0`;
-- relevant requirements have source provenance;
-- no unresolved `OPEN-*` or critic blocker affects the compilation scope.
+5. Write it safely. An existing primary produces `specification.candidate.json` or the next numbered candidate.
 
-If any condition fails, stop compilation and report the exact failed gate.
+   ```text
+   python "<skill-dir>/scripts/pipeline_artifacts.py" safe-write specification "<staged-specification.json>" "<output-dir>/specification.json"
+   ```
 
-Do not infer approval from:
+6. Validate and render the actual written file to the matching Markdown name:
 
-- the absence of comments;
-- a file name;
-- a completed task;
-- a previous conversation;
-- an agent statement;
-- the existence of requirements alone.
+   ```text
+   python "<skill-dir>/scripts/pipeline_artifacts.py" render specification "<written-specification.json>" --requirements "<requirements.json>" --baseline "<baseline.json>" --output "<matching-specification.md>"
+   ```
+
+7. Report the gate result, input hashes, actual output paths, counts of `INV-*`, `AC-*`, `FAIL-*`, and `GAP-*`, and uncovered approved requirements.
 
 ## Compilation rules
 
-- Generate `INV-*` only for properties that must always hold according to the approved requirements.
-- For every invariant state its scope, lifecycle/state boundary, checkable condition, and violation condition.
-- Generate `AC-*` for observable behavior.
-- Prefer `WHEN <event or condition>, THE SYSTEM SHALL <observable outcome>`.
-- Use Given/When/Then when preconditions, action, and result require clearer separation.
-- Generate `FAIL-*` for expected handling of invalid input, unavailable dependencies, rejected authorization, timeout, capacity or boundary breach, conflict, concurrency, or recovery paths only when supported by approved requirements.
-- Every output item must trace to one or more approved `BG-*`, `BR-*`, `FR-*`, `NFR-*`, or `CON-*` IDs. If the input does not specify behavior, emit a compilation gap instead of fabricating an invariant, criterion, or failure scenario.
+- Generate `INV-*` only for properties that approved requirements say must always hold. Include scope, checkable condition, and violation condition.
+- Generate observable `AC-*`; prefer `WHEN <event or condition>, THE SYSTEM SHALL <outcome>` or Given/When/Then when clearer.
+- Generate `FAIL-*` only for failure or recovery behavior supported by approved requirements.
+- Create `GAP-*` when approved requirements do not support safe compilation.
+- Every output item must reference one or more approved `BG-*`, `BR-*`, `FR-*`, `NFR-*`, or `CON-*` IDs.
 - Preserve quantifiers, values, actors, authorization, timing, ownership, states, and transitions.
-- A testable restatement may clarify syntax but may not expand semantic scope.
-- Do not turn a business goal alone into detailed system behavior unless an approved requirement or business rule provides that behavior.
+- Include one traceability row for every requirement in the compilation scope, even when its only result is a gap.
 
-## Output
+Do not select test frameworks, write tests, design architecture, resolve business ambiguity, or implement production code.
 
-Return four sections.
-
-### 1. Compilation gate
-
-Report:
-
-- baseline version;
-- approved by;
-- approved at;
-- requirements file;
-- hash verification result;
-- compilation scope;
-- gate result: `PASS` or `FAIL`.
-
-### 2. Invariants
-
-Produce `INV-*` entries containing:
-
-- statement;
-- scope;
-- checkable condition;
-- violation condition;
-- source requirement IDs.
-
-### 3. Acceptance criteria
-
-Produce `AC-*` entries in observable form with source requirement IDs.
-
-### 4. Failure scenarios and gaps
-
-Produce:
-
-- `FAIL-*` entries for supported failure/recovery behavior;
-- `GAP-*` entries wherever approved requirements are insufficient for safe compilation.
-
-Finish with the traceability matrix:
-
-| Approved requirement | INV | AC | FAIL | Gaps |
-|---|---|---|---|---|
-| FR-012 | INV-004 | AC-021, AC-022 | FAIL-006 | — |
-
-The output supports QA and test design.
-
-Do not select test frameworks.
-Do not write tests.
-Do not design architecture.
-Do not implement production code.
+Finish only when the JSON validates, Markdown is regenerated from it, all output references resolve, and the approved scope is covered by traceability rows.

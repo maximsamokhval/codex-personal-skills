@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/maximsamokhval/codex-personal-skills/contracts/requirements-pipeline/v1/review.schema.json",
+  "title": "Requirements pipeline review artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "requirements_path", "requirements_sha256", "reviewed_at", "findings"],
+  "properties": {
+    "schema_version": {"const": "requirements-review/v1"},
+    "requirements_path": {"type": "string", "minLength": 1},
+    "requirements_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "reviewed_at": {"type": "string", "minLength": 1},
+    "findings": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/finding"}
+    }
+  },
+  "$defs": {
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "severity", "affected_ids", "defect", "evidence", "resolution_needed", "status"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^CRIT-[0-9]{3,}$"},
+        "type": {"enum": ["LOCAL", "CROSS", "MISSING"]},
+        "severity": {"enum": ["blocker", "risk", "note"]},
+        "affected_ids": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^(BG|BR|FR|NFR|CON)-[0-9]{3,}$"}
+        },
+        "defect": {"type": "string", "minLength": 1},
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "resolution_needed": {"type": "string", "minLength": 1},
+        "status": {"enum": ["open", "resolved", "accepted-risk"]},
+        "resolution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["by", "at", "note"],
+          "properties": {
+            "by": {"type": "string", "minLength": 1},
+            "at": {"type": "string", "minLength": 1},
+            "note": {"type": "string", "minLength": 1}
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"enum": ["resolved", "accepted-risk"]}}},
+          "then": {"required": ["resolution"]}
+        }
+      ]
+    }
+  }
+}

@@ -1,3 +1,4 @@
 interface:
   display_name: "Requirements Extract"
-  short_description: "Extract a source-grounded requirements model"
+  short_description: "Create editable, traceable requirements JSON"
+  default_prompt: "Use $requirements-extract to extract these materials into requirements.json and a generated Markdown view."

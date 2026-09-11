@@ -1,72 +1,69 @@
 ---
 name: requirements-extract
-description: Extract a source-grounded requirements model from raw briefs, specifications, meeting notes, or process descriptions. Use before design or implementation when the requested scope is not yet a controlled specification.
+description: Extract a source-grounded requirements model from raw briefs, specifications, meeting notes, or process descriptions into editable requirements.json and generated requirements.md. Use as the first stage of a controlled requirements pipeline before critique, approval, design, or implementation.
 ---
 
 # Requirements Extract
 
-Turn the supplied source material into a traceable model of what is stated, without silently filling gaps.
+Turn supplied source material into a traceable `requirements/v1` JSON model without silently filling gaps. JSON is the source of truth; Markdown is generated from it.
 
 ## Output language
 
 - Produce all natural-language output in Ukrainian.
-- Do not switch to the language of the source material.
 - Preserve exact source quotations in their original language when needed for provenance.
-- Do not translate code, identifiers, API names, protocol names, file names, commands, or machine-readable values.
+- Preserve code, identifiers, API names, file names, commands, and machine-readable values.
+
+## Artifacts
+
+Use the project-defined location. Otherwise use:
+
+- `docs/requirements/requirements.json` — editable source of truth;
+- `docs/requirements/requirements.md` — generated view.
+
+Read [references/contracts/requirements.schema.json](references/contracts/requirements.schema.json) before creating or editing the JSON. Treat `schema_version: requirements/v1` as an exact compatibility boundary.
+
+## Workflow
+
+1. Inventory every supplied source and choose the narrowest available locator: file, section, heading, paragraph, use case, cell range, or quoted fragment.
+2. Extract requirements separately from background, examples, rationale, and optional solutions.
+3. Build a staged UTF-8 JSON file that conforms to `requirements/v1`.
+4. Validate the staged file:
+
+   ```text
+   python "<skill-dir>/scripts/pipeline_artifacts.py" validate requirements "<staged-json>"
+   ```
+
+5. Write it safely:
+
+   ```text
+   python "<skill-dir>/scripts/pipeline_artifacts.py" safe-write requirements "<staged-json>" "<output-dir>/requirements.json"
+   ```
+
+   When the primary JSON exists, the command creates `requirements.candidate.json` or the next numbered candidate. Replace the primary file only after an explicit user request, using `--replace`.
+
+6. Render the JSON path reported by `safe-write`. Use the matching Markdown name; a candidate JSON produces a candidate Markdown view and leaves the primary view unchanged.
+
+   ```text
+   python "<skill-dir>/scripts/pipeline_artifacts.py" render requirements "<written-json>" --output "<matching-markdown>"
+   ```
+
+7. Report processed and skipped sources, the actual written paths, requirement and open-item counts, and whether the result is primary or candidate.
+
+For an existing `requirements.json` supplied for manual maintenance, validate it first. Regenerate `requirements.md` from the validated JSON; never parse Markdown back into JSON.
 
 ## Extraction rules
 
-- Preserve the source's meaning. Separate an explicit statement from a derived requirement or interpretation.
-- Every entry must include its stable ID, concise normative statement, source location, and `explicit` or `derived` provenance.
-- Identify the source using the document/file name and the narrowest available location: section, heading, paragraph, use case, or quoted fragment.
-- Use only these categories: `BG-*` business goals, `BR-*` business rules, `FR-*` functional requirements, `NFR-*` non-functional requirements, `CON-*` constraints, and `OPEN-*` unresolved questions.
-- `UNKNOWN -> OPEN`: missing facts, undefined terms, conflicting statements, and assumptions that would change behavior become `OPEN-*`; never turn them into a "reasonable assumption".
-- Preserve meaningful qualifiers, actors, conditions, thresholds, time limits, data ownership, permissions, lifecycle states, and constraints.
-- Do not collapse distinct requirements into one vague summary.
-- Distinguish requirements from background, examples, rationale, and proposed solutions.
-- Record a proposed solution as a constraint only when the source makes it mandatory.
+- Preserve source meaning. Mark each requirement as `explicit` or `derived`.
+- Use stable IDs: `BG-*`, `BR-*`, `FR-*`, `NFR-*`, and `CON-*`. Use `OPEN-*` for unresolved questions.
+- Every requirement needs a concise normative statement and at least one valid source locator.
+- `UNKNOWN -> OPEN`: missing facts, undefined terms, conflicts, and behavior-changing assumptions become open items.
+- Preserve actors, conditions, thresholds, time limits, ownership, permissions, states, and constraints.
+- Keep distinct requirements separate. Record a proposed solution as a constraint only when the source makes it mandatory.
+- A derived requirement must list its supporting references and explain the necessary logical inference. If the inference needs an unstated business premise, create an open item instead.
+- Give every open item a severity, status, reason, minimal resolution question, and affected requirement IDs.
 
-## Derived requirements
+## Completion criteria
 
-A `derived` requirement is allowed only when it logically follows from explicit source statements without introducing an unstated business premise.
+Finish only when the written JSON validates, every requirement traces to a known source, unresolved uncertainty is visible as `OPEN-*`, and the matching Markdown view exists.
 
-For every derived requirement include:
-
-- supporting source fragments or requirement IDs;
-- a concise `Derivation` explaining the logical step;
-- why the derived behavior is necessary to preserve the source meaning.
-
-If the derivation requires an unstated premise, business choice, threshold, policy, priority, exception, or interpretation that could change observable behavior, do not create the derived requirement. Create an `OPEN-*` item instead.
-
-## Output
-
-Begin with a short scope-and-source note.
-
-Then produce a requirements register:
-
-| ID | Statement | Provenance | Source |
-|---|---|---|---|
-| FR-001 | ... | explicit | Brief, section ... |
-
-For every `derived` item, immediately include:
-
-**Derivation:** supporting IDs/source → logical inference.
-
-List `OPEN-*` prominently. For every open item include:
-
-- what is unknown or ambiguous;
-- why the answer matters;
-- the minimal question needed to resolve it;
-- which requirements or process areas it affects.
-
-Finish with traceability observations:
-
-- uncovered source sections;
-- conflicting statements;
-- derived requirements requiring human review;
-- items that must be resolved before design.
-
-Do not declare a requirements set approved.
-Do not choose an architecture.
-Do not create acceptance criteria.
-Do not resolve `OPEN-*` items yourself.
+Do not approve requirements, close open items, create acceptance criteria, choose architecture, or implement the system.

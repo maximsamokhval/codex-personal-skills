@@ -1,3 +1,4 @@
 interface:
   display_name: "Specification Compiler"
-  short_description: "Compile approved requirements into INV, AC, and FAIL"
+  short_description: "Compile an approved requirements baseline"
+  default_prompt: "Use $specification-compiler to compile the approved baseline into specification.json and Markdown."

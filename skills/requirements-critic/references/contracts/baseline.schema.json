@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/maximsamokhval/codex-personal-skills/contracts/requirements-pipeline/v1/baseline.schema.json",
+  "title": "Requirements pipeline approval baseline",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "approved_by",
+    "approved_at",
+    "scope",
+    "requirements_path",
+    "requirements_version",
+    "requirements_sha256",
+    "review_path",
+    "review_sha256",
+    "open_blockers"
+  ],
+  "properties": {
+    "schema_version": {"const": "requirements-baseline/v1"},
+    "status": {"const": "approved"},
+    "approved_by": {"type": "string", "minLength": 1},
+    "approved_at": {"type": "string", "minLength": 1},
+    "scope": {"type": "string", "minLength": 1},
+    "requirements_path": {"type": "string", "minLength": 1},
+    "requirements_version": {"type": "string", "minLength": 1},
+    "requirements_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "review_path": {"type": "string", "minLength": 1},
+    "review_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "open_blockers": {"const": 0}
+  }
+}
