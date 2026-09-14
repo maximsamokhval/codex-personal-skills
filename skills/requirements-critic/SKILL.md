@@ -61,6 +61,8 @@ Before acting, read the relevant contracts:
    python "<skill-dir>/scripts/pipeline_artifacts.py" render review "<written-review.json>" --requirements "<requirements.json>" --output "<matching-review.md>"
    ```
 
+   The renderer orders findings by importance: `blocker` before `risk` before `note`, then `open` before `accepted-risk` before `resolved`, then systemic type `CROSS`, missing coverage `MISSING`, isolated type `LOCAL`, and numeric ID. Rendering never changes JSON array order.
+
 On a repeat review, compare the current review with the new findings. Preserve the ID for the same defect. Carry an `accepted-risk` decision only while its recorded scope still applies; retain a resolved finding only while the defect remains absent, and reopen it with an explanation if it reappears. Create a new ID for a materially different defect. Never overwrite the primary review without explicit authorization.
 
 ## Review rules

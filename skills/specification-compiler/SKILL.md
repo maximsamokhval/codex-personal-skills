@@ -63,6 +63,8 @@ The gate must pass. It verifies supported contracts, structural and referential 
    python "<skill-dir>/scripts/pipeline_artifacts.py" render specification "<written-specification.json>" --requirements "<requirements.json>" --baseline "<baseline.json>" --output "<matching-specification.md>"
    ```
 
+   The renderer puts the highest-attention output types first: `GAP`, `FAIL`, `INV`, then `AC`; items are sorted by numeric ID, and traceability rows by requirement type and numeric ID. Rendering never changes JSON array order.
+
 7. Report the gate result, input hashes, actual output paths, counts of `INV-*`, `AC-*`, `FAIL-*`, and `GAP-*`, and uncovered approved requirements.
 
 ## Compilation rules

@@ -47,6 +47,8 @@ Read [references/contracts/requirements.schema.json](references/contracts/requir
    python "<skill-dir>/scripts/pipeline_artifacts.py" render requirements "<written-json>" --output "<matching-markdown>"
    ```
 
+   The renderer groups requirements by `type` in contract order and sorts each group by numeric ID. Open items are ordered by importance: `blocker` before `risk` before `note`, then `open` before `accepted-risk` before `resolved`, then by numeric ID. Rendering never changes JSON array order.
+
 7. Report processed and skipped sources, the actual written paths, requirement and open-item counts, and whether the result is primary or candidate.
 
 For an existing `requirements.json` supplied for manual maintenance, validate it first. Regenerate `requirements.md` from the validated JSON; never parse Markdown back into JSON.

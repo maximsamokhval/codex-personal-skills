@@ -30,6 +30,16 @@ TYPE_BY_PREFIX = {
     "NFR": "non-functional",
     "CON": "constraint",
 }
+REQUIREMENT_TYPE_PRIORITY = {
+    "business-goal": 0,
+    "business-rule": 1,
+    "functional": 2,
+    "non-functional": 3,
+    "constraint": 4,
+}
+FINDING_TYPE_PRIORITY = {"CROSS": 0, "MISSING": 1, "LOCAL": 2}
+SEVERITY_PRIORITY = {"blocker": 0, "risk": 1, "note": 2}
+STATUS_PRIORITY = {"open": 0, "accepted-risk": 1, "resolved": 2}
 
 
 class ArtifactError(ValueError):
@@ -748,6 +758,50 @@ def _cell(value: Any) -> str:
     return str(value).replace("|", "\\|").replace("\r", " ").replace("\n", " ")
 
 
+def _priority(value: str, ranks: dict[str, int]) -> tuple[int, str]:
+    return ranks.get(value, len(ranks)), value
+
+
+def _identifier_key(identifier: str) -> tuple[str, int, str]:
+    prefix, separator, sequence = identifier.rpartition("-")
+    if separator and sequence.isdigit():
+        return prefix, int(sequence), identifier
+    return identifier, 0, identifier
+
+
+def _requirement_key(requirement: dict[str, Any]) -> tuple[Any, ...]:
+    return (
+        _priority(requirement["type"], REQUIREMENT_TYPE_PRIORITY),
+        _identifier_key(requirement["id"]),
+    )
+
+
+def _open_item_key(item: dict[str, Any]) -> tuple[Any, ...]:
+    return (
+        _priority(item["severity"], SEVERITY_PRIORITY),
+        _priority(item["status"], STATUS_PRIORITY),
+        _identifier_key(item["id"]),
+    )
+
+
+def _finding_key(finding: dict[str, Any]) -> tuple[Any, ...]:
+    return (
+        _priority(finding["severity"], SEVERITY_PRIORITY),
+        _priority(finding["status"], STATUS_PRIORITY),
+        _priority(finding["type"], FINDING_TYPE_PRIORITY),
+        _identifier_key(finding["id"]),
+    )
+
+
+def _requirement_id_key(requirement_id: str) -> tuple[Any, ...]:
+    prefix = requirement_id.split("-", 1)[0]
+    requirement_type = TYPE_BY_PREFIX.get(prefix, "")
+    return (
+        _priority(requirement_type, REQUIREMENT_TYPE_PRIORITY),
+        _identifier_key(requirement_id),
+    )
+
+
 def render_requirements(data: dict[str, Any]) -> str:
     document = data["document"]
     lines = [
@@ -762,7 +816,7 @@ def render_requirements(data: dict[str, Any]) -> str:
         "| ID | Тип | Формулювання | Походження | Джерела |",
         "| --- | --- | --- | --- | --- |",
     ]
-    for requirement in data["requirements"]:
+    for requirement in sorted(data["requirements"], key=_requirement_key):
         lines.append(
             "| {id} | {type} | {statement} | {provenance} | {sources} |".format(
                 id=_cell(requirement["id"]),
@@ -782,7 +836,7 @@ def render_requirements(data: dict[str, Any]) -> str:
                 "| --- | --- | --- | --- | --- |",
             ]
         )
-        for item in data["open_items"]:
+        for item in sorted(data["open_items"], key=_open_item_key):
             lines.append(
                 "| {id} | {severity} | {status} | {question} | {affected} |".format(
                     id=_cell(item["id"]),
@@ -809,7 +863,7 @@ def render_review(data: dict[str, Any]) -> str:
         "| ID | Тип | Серйозність | Статус | Вимоги | Дефект | Потрібне рішення |",
         "| --- | --- | --- | --- | --- | --- | --- |",
     ]
-    for finding in findings:
+    for finding in sorted(findings, key=_finding_key):
         lines.append(
             "| {id} | {type} | {severity} | {status} | {affected} | {defect} | {resolution} |".format(
                 id=_cell(finding["id"]),
@@ -860,21 +914,21 @@ def render_specification(data: dict[str, Any]) -> str:
         f"SHA-256 baseline: `{data['baseline_sha256']}`",
     ]
     sections = [
+        ("Прогалини", "gaps", ("description",)),
+        ("Сценарії відмов", "failure_scenarios", ("scenario", "expected_behavior")),
         (
             "Інваріанти",
             "invariants",
             ("statement", "scope", "checkable_condition", "violation_condition"),
         ),
         ("Критерії приймання", "acceptance_criteria", ("statement",)),
-        ("Сценарії відмов", "failure_scenarios", ("scenario", "expected_behavior")),
-        ("Прогалини", "gaps", ("description",)),
     ]
     for title, collection, fields in sections:
         lines.extend(["", f"## {title}", ""])
         if not data[collection]:
             lines.append("Немає.")
             continue
-        for item in data[collection]:
+        for item in sorted(data[collection], key=lambda value: _identifier_key(value["id"])):
             lines.append(f"### `{item['id']}`")
             lines.append("")
             for field in fields:
@@ -891,7 +945,9 @@ def render_specification(data: dict[str, Any]) -> str:
             "| --- | --- | --- | --- | --- |",
         ]
     )
-    for row in data["traceability"]:
+    for row in sorted(
+        data["traceability"], key=lambda value: _requirement_id_key(value["requirement_id"])
+    ):
         lines.append(
             "| {requirement} | {inv} | {ac} | {fail} | {gap} |".format(
                 requirement=_cell(row["requirement_id"]),
