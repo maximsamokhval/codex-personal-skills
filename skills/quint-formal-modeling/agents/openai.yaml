@@ -1,0 +1,4 @@
+interface:
+  display_name: "Quint: формальна модель"
+  short_description: "Виконувані специфікації поведінки"
+  default_prompt: "Використай $quint-formal-modeling, щоб створити або перевірити виконувану специфікацію цієї поведінки."
