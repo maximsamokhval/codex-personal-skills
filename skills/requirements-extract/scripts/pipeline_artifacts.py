@@ -261,7 +261,7 @@ def validate_requirements(data: dict[str, Any]) -> list[str]:
 
 
 def validate_review(
-    data: dict[str, Any], requirement_ids: set[str] | None = None
+    data: dict[str, Any], affected_ids: set[str] | None = None
 ) -> list[str]:
     errors: list[str] = []
     root_keys = {
@@ -326,11 +326,15 @@ def validate_review(
         if finding.get("severity") not in {"blocker", "risk", "note"}:
             errors.append(f"{path}.severity: expected blocker, risk, or note")
         affected = _array(finding.get("affected_ids"), f"{path}.affected_ids", errors)
-        for affected_index, requirement_id in enumerate(affected):
+        for affected_index, affected_id in enumerate(affected):
             affected_path = f"{path}.affected_ids[{affected_index}]"
-            if requirement_ids is not None and requirement_id not in requirement_ids:
+            if not isinstance(affected_id, str) or not (
+                REQUIREMENT_ID.fullmatch(affected_id) or OPEN_ID.fullmatch(affected_id)
+            ):
+                errors.append(f"{affected_path}: invalid affected ID '{affected_id}'")
+            elif affected_ids is not None and affected_id not in affected_ids:
                 errors.append(
-                    f"{affected_path}: unknown requirement ID '{requirement_id}'"
+                    f"{affected_path}: unknown affected ID '{affected_id}'"
                 )
         _non_empty_string(finding.get("defect"), f"{path}.defect", errors)
         evidence = _array(finding.get("evidence"), f"{path}.evidence", errors)
@@ -514,9 +518,9 @@ def validate(
     if kind == "review" and requirements_path is not None:
         requirements = load_json(requirements_path)
         validate_data("requirements", requirements, requirements_path)
-        errors = validate_review(
-            data, {item["id"] for item in requirements["requirements"]}
-        )
+        known_ids = {item["id"] for item in requirements["requirements"]}
+        known_ids.update(item["id"] for item in requirements["open_items"])
+        errors = validate_review(data, known_ids)
         version = "requirements-review/v1"
         if errors:
             raise ArtifactError("\n".join(f"{path}: {error}" for error in errors))
@@ -629,8 +633,11 @@ def approve(
     requirements = load_json(requirements_path)
     validate_data("requirements", requirements, requirements_path)
     requirement_ids = {item["id"] for item in requirements["requirements"]}
+    review_affected_ids = requirement_ids | {
+        item["id"] for item in requirements["open_items"]
+    }
     review = load_json(review_path)
-    review_errors = validate_review(review, requirement_ids)
+    review_errors = validate_review(review, review_affected_ids)
     if review_errors:
         raise ArtifactError(
             "\n".join(f"{review_path}: {error}" for error in review_errors)
@@ -679,8 +686,11 @@ def gate(requirements_path: Path, review_path: Path, baseline_path: Path) -> Non
     requirements = load_json(requirements_path)
     validate_data("requirements", requirements, requirements_path)
     requirement_ids = {item["id"] for item in requirements["requirements"]}
+    review_affected_ids = requirement_ids | {
+        item["id"] for item in requirements["open_items"]
+    }
     review = load_json(review_path)
-    review_errors = validate_review(review, requirement_ids)
+    review_errors = validate_review(review, review_affected_ids)
     if review_errors:
         raise ArtifactError(
             "\n".join(f"{review_path}: {error}" for error in review_errors)

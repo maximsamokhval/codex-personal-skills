@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/maximsamokhval/codex-personal-skills/skills/decision-register/references/decision-register.schema.json",
+  "title": "Requirements decision register",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "requirements_path", "requirements_sha256", "review_path", "review_sha256", "scope", "source_clauses", "requirement_owners", "open_item_owners"],
+  "properties": {
+    "schema_version": {"const": "requirements-decision-register/v1"},
+    "requirements_path": {"type": "string", "minLength": 1},
+    "requirements_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "review_path": {"type": "string", "minLength": 1},
+    "review_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requirement_ids", "open_item_ids", "source_clause_ids"],
+      "properties": {
+        "requirement_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^(BG|BR|FR|NFR|CON)-[0-9]{3,}$"}},
+        "open_item_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^OPEN-[0-9]{3,}$"}},
+        "source_clause_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "source_clauses": {"type": "array", "items": {"$ref": "#/$defs/sourceClause"}},
+    "requirement_owners": {"type": "array", "items": {"$ref": "#/$defs/requirementOwner"}},
+    "open_item_owners": {"type": "array", "items": {"$ref": "#/$defs/openItemOwner"}}
+  },
+  "$defs": {
+    "nullableText": {"type": ["string", "null"], "minLength": 1},
+    "sourceClause": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_clause_id", "requirement_ids", "source_refs", "disposition", "decision_owner", "decision_ref", "rationale", "provisional_rule", "review_trigger", "verification"],
+      "properties": {
+        "source_clause_id": {"type": "string", "minLength": 1},
+        "requirement_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^(BG|BR|FR|NFR|CON)-[0-9]{3,}$"}},
+        "source_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "disposition": {"enum": ["pending", "provisional", "adopted", "accepted-risk", "rejected", "deferred"]},
+        "decision_owner": {"$ref": "#/$defs/nullableText"},
+        "decision_ref": {"$ref": "#/$defs/nullableText"},
+        "rationale": {"$ref": "#/$defs/nullableText"},
+        "provisional_rule": {"$ref": "#/$defs/nullableText"},
+        "review_trigger": {"$ref": "#/$defs/nullableText"},
+        "verification": {"$ref": "#/$defs/nullableText"}
+      }
+    },
+    "requirementOwner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requirement_id", "feature_id", "feature_owner", "assignment_ref"],
+      "properties": {
+        "requirement_id": {"type": "string", "pattern": "^(BG|BR|FR|NFR|CON)-[0-9]{3,}$"},
+        "feature_id": {"$ref": "#/$defs/nullableText"},
+        "feature_owner": {"$ref": "#/$defs/nullableText"},
+        "assignment_ref": {"$ref": "#/$defs/nullableText"}
+      }
+    },
+    "openItemOwner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["open_item_id", "requirements_status", "feature_id", "decision_owner", "assignment_ref", "decision_ref", "provisional_rule", "review_trigger"],
+      "properties": {
+        "open_item_id": {"type": "string", "pattern": "^OPEN-[0-9]{3,}$"},
+        "requirements_status": {"enum": ["open", "resolved", "accepted-risk"]},
+        "feature_id": {"$ref": "#/$defs/nullableText"},
+        "decision_owner": {"$ref": "#/$defs/nullableText"},
+        "assignment_ref": {"$ref": "#/$defs/nullableText"},
+        "decision_ref": {"$ref": "#/$defs/nullableText"},
+        "provisional_rule": {"$ref": "#/$defs/nullableText"},
+        "review_trigger": {"$ref": "#/$defs/nullableText"}
+      }
+    }
+  }
+}

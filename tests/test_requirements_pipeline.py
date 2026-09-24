@@ -378,6 +378,43 @@ class RequirementsPipelineTests(unittest.TestCase):
             self.assertIn("blocker", markdown)
             self.assertIn("open", markdown)
 
+    def test_review_accepts_existing_open_item_references(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            directory = Path(temp_dir)
+            payload = valid_requirements()
+            payload["open_items"] = [open_item("OPEN-001", "blocker", "open")]
+            requirements = self.write_json(directory, "requirements.json", payload)
+            finding_payload = open_blocker()
+            finding_payload["affected_ids"] = ["FR-001", "OPEN-001"]
+            review = self.write_json(
+                directory, "review.json", valid_review(requirements, [finding_payload])
+            )
+
+            result = self.run_tool(
+                "validate", "review", str(review), "--requirements", str(requirements)
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_review_rejects_unknown_open_item_reference(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            directory = Path(temp_dir)
+            requirements = self.write_json(
+                directory, "requirements.json", valid_requirements()
+            )
+            finding_payload = open_blocker()
+            finding_payload["affected_ids"] = ["OPEN-999"]
+            review = self.write_json(
+                directory, "review.json", valid_review(requirements, [finding_payload])
+            )
+
+            result = self.run_tool(
+                "validate", "review", str(review), "--requirements", str(requirements)
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("unknown affected ID 'OPEN-999'", result.stderr)
+
     def test_review_markdown_sorts_by_severity_status_type_and_id(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             directory = Path(temp_dir)

@@ -10,6 +10,7 @@
 | --- | --- |
 | [`requirements-extract`](skills/requirements-extract/) | витягнути вимоги з неструктурованих джерел |
 | [`requirements-critic`](skills/requirements-critic/) | знайти дефекти, суперечності та прогалини у вимогах |
+| [`decision-register`](skills/decision-register/) | зібрати рішення й призначення власників, прив'язані до вимог і критики |
 | [`specification-compiler`](skills/specification-compiler/) | перетворити затверджені вимоги на інваріанти, критерії приймання та сценарії відмов |
 | [`youtrack-mermaid`](skills/youtrack-mermaid/) | створити або оновити Mermaid-схему в статті YouTrack |
 | [`iso-29148-requirements`](skills/iso-29148-requirements/) | витягнути, нормалізувати та трасувати вимоги за практичною методикою ISO/IEC/IEEE 29148 |
@@ -18,6 +19,8 @@
 ## Триетапний конвеєр вимог
 
 `requirements-extract`, `requirements-critic` і `specification-compiler` використовують спільний контракт `requirements-pipeline/v1`. JSON є редагованим джерелом істини, а Markdown — автоматично згенерованим представленням.
+
+`decision-register` створює окремий артефакт між критикою й рішенням людини. Він пінить SHA-256 вимог і критики, обліковує статус джерельних положень та ownership для вибраних `requirements`/`OPEN`; чернетка лишає непідтверджені рішення `pending`.
 
 | Етап | Вхід | JSON-результат | Markdown-представлення |
 | --- | --- | --- | --- |
@@ -53,6 +56,12 @@
 Перевіряє `baseline.json`, SHA-256 вхідних файлів і відсутність відкритих блокерів, після чого створює `specification.json` та похідний `specification.md`. Компілює вимоги в інваріанти `INV-*`, спостережувані критерії приймання `AC-*`, сценарії відмов `FAIL-*` і прогалини `GAP-*`, зберігаючи трасування до вихідних requirement ID.
 
 **Мініприклад:** `Використай $specification-compiler для docs/requirements/baseline.json і створи трасований specification.json.`
+
+### `decision-register`
+
+Створює `decision-register.json` і похідний `decision-register.md` із явним охопленням вимог, відкритих питань і положень джерела. Перевіряє SHA-256 обох входів, повноту ID та підстави для прийнятих чи тимчасових рішень.
+
+**Мініприклад:** `Використай $decision-register для поточних requirements.json і review.json; підготуй реєстр рішень для нових вимог, залиш непідтверджене pending.`
 
 ### `youtrack-mermaid`
 

@@ -32,6 +32,7 @@ COPIES = {
         / "references"
         / "contracts"
         / "requirements.schema.json",
+        ROOT / "skills" / "decision-register" / "references" / "contracts" / "requirements.schema.json",
     ],
     "review.schema.json": [
         ROOT
@@ -46,6 +47,7 @@ COPIES = {
         / "references"
         / "contracts"
         / "review.schema.json",
+        ROOT / "skills" / "decision-register" / "references" / "contracts" / "review.schema.json",
     ],
     "baseline.schema.json": [
         ROOT
@@ -77,6 +79,7 @@ COPIES = {
         / "specification-compiler"
         / "scripts"
         / "pipeline_artifacts.py",
+        ROOT / "skills" / "decision-register" / "scripts" / "pipeline_artifacts.py",
     ],
 }
 

@@ -26,7 +26,7 @@
         "severity": {"enum": ["blocker", "risk", "note"]},
         "affected_ids": {
           "type": "array",
-          "items": {"type": "string", "pattern": "^(BG|BR|FR|NFR|CON)-[0-9]{3,}$"}
+          "items": {"type": "string", "pattern": "^(BG|BR|FR|NFR|CON|OPEN)-[0-9]{3,}$"}
         },
         "defect": {"type": "string", "minLength": 1},
         "evidence": {
