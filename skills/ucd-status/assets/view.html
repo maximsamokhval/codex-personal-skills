@@ -1,0 +1,152 @@
+<div id="__ROOT__">
+  <h2 data-title></h2>
+  <div class="text-small text-muted" data-snapshot></div>
+  <div class="viz-row" data-legend></div>
+  <div class="nav nav-pills" role="tablist" aria-label="Use case views" data-tabs></div>
+  <div data-panels></div>
+  <details data-sources><summary data-notes-label></summary><div data-notes></div></details>
+</div>
+<style>
+#__ROOT__{color:var(--foreground)}
+#__ROOT__ .ucd-canvas{width:100%;margin-block:12px}
+#__ROOT__ .ucd-canvas svg{display:block;width:100%;height:auto}
+#__ROOT__ .ucd-canvas text{fill:var(--foreground);font-family:inherit;font-size:14px}
+#__ROOT__ .ucd-canvas .ucd-small{font-size:12px}
+#__ROOT__ .ucd-canvas .ucd-structure{stroke:var(--border);stroke-width:1.2;fill:none}
+#__ROOT__ .ucd-canvas .ucd-actor{stroke:var(--foreground);stroke-width:1.5;fill:none}
+#__ROOT__ .ucd-implemented{--status:var(--green)}
+#__ROOT__ .ucd-in_progress{--status:var(--muted-foreground)}
+#__ROOT__ .ucd-pending{--status:var(--red)}
+#__ROOT__ .ucd-unknown{--status:var(--border)}
+#__ROOT__ .ucd-case ellipse{fill:color-mix(in srgb,var(--status) 15%,transparent);stroke:var(--status);stroke-width:1.3}
+#__ROOT__ .ucd-unknown ellipse{fill:none;stroke-dasharray:4 3}
+#__ROOT__ .ucd-swatch{display:inline-block;width:12px;height:12px;background:var(--status);margin-inline-end:5px}
+#__ROOT__ .ucd-unknown .ucd-swatch{background:none;border:1px dashed var(--border)}
+#__ROOT__ .ucd-trace{margin-block:10px;overflow-wrap:anywhere}
+#__ROOT__ .ucd-trace dt{font-weight:500;margin-block-start:8px}
+#__ROOT__ .ucd-trace dd{margin-inline-start:0}
+#__ROOT__ [data-legend]{display:flex;flex-wrap:wrap;gap:12px;margin-block:12px}
+</style>
+<script type="application/json" id="__ROOT__-data">__PAYLOAD__</script>
+<script>
+(() => {
+  const root = document.getElementById('__ROOT__');
+  const data = JSON.parse(document.getElementById('__ROOT__-data').textContent);
+  const ns = 'http://www.w3.org/2000/svg';
+  const actors = new Map(data.actors.map(a => [a.id,a]));
+  const requirements = new Map(data.requirements.map(r => [r.id,r]));
+  const labels = data.labels;
+  const add = (parent,tag,text,attrs={}) => {
+    const el = document.createElement(tag);
+    for (const [k,v] of Object.entries(attrs)) el.setAttribute(k,String(v));
+    if (text !== null) el.textContent = text;
+    parent.appendChild(el); return el;
+  };
+  const svgAdd = (parent,tag,attrs={},text=null) => {
+    const el = document.createElementNS(ns,tag);
+    for (const [k,v] of Object.entries(attrs)) el.setAttribute(k,String(v));
+    if (text !== null) el.textContent = text;
+    parent.appendChild(el); return el;
+  };
+  const measureContext = document.createElement('canvas').getContext('2d');
+  if(measureContext) measureContext.font='14px system-ui';
+  const measure = value => measureContext ? measureContext.measureText(value).width : Array.from(value).length*9;
+  const wrap = (value,max) => {
+    const lines=[]; let line='';
+    for (const word of value.split(/\s+/u)) {
+      for (const part of Array.from(word).reduce((out,c) => {
+        if(!out.length || measure(out[out.length-1]+c)>max) out.push('');
+        out[out.length-1]+=c; return out;
+      },[])) {
+        if (line && measure(line+' '+part)>max) {lines.push(line);line='';}
+        line+=(line?' ':'')+part;
+      }
+    }
+    if(line) lines.push(line); return lines;
+  };
+  const svgText = (svg,x,y,lines,small=false) => {
+    const text=svgAdd(svg,'text',{x,y,'text-anchor':'middle',...(small?{class:'ucd-small'}:{})});
+    lines.forEach((line,i)=>svgAdd(text,'tspan',{x,dy:i?18:0},line)); return text;
+  };
+  root.querySelector('[data-title]').textContent=data.title;
+  root.querySelector('[data-snapshot]').textContent=Object.values(data.snapshot).join(' · ');
+  for(const status of ['implemented','in_progress','pending','unknown']) {
+    const item=add(root.querySelector('[data-legend]'),'span',null,{class:`ucd-${status}`});
+    add(item,'span',null,{class:'ucd-swatch','aria-hidden':'true'});add(item,'span',labels[status]);
+  }
+  root.querySelector('[data-notes-label]').textContent=labels.notes;
+  const notes=root.querySelector('[data-notes]');
+  data.notes.forEach(note=>add(notes,'p',note));
+  data.sources.forEach(source=>add(notes,'p',`${source.id}: ${source.locator}${source.sha256?' · SHA-256 '+source.sha256:''}`));
+  data.actors.forEach(actor=>add(notes,'p',`${actor.id} · ${actor.label} · ${actor.source}`));
+  const draw = (host,view) => {
+    const width=Math.max(320,Math.floor(host.getBoundingClientRect().width || 320));
+    const left=104, right=width-8, center=(left+right)/2, rx=(right-left)/2-16;
+    const lineWidth=rx*1.2;
+    const systemLines=wrap(view.system,right-left-20);
+    let y=48+systemLines.length*18;
+    const cases=view.cases.map(uc=>{
+      const title=wrap(uc.label,lineWidth), ref=wrap(uc.id,lineWidth);
+      const status=wrap(labels[uc.status],lineWidth);
+      const lines=[...title,...ref,...status];
+      const ry=Math.max(46,(lines.length*18+30)/2);
+      const item={uc,lines,cy:y+ry,ry}; y+=2*ry+24; return item;
+    });
+    const actorLines=view.actors.map(id=>wrap(actors.get(id).label,90));
+    const actorSizes=actorLines.map(lines=>80+lines.length*18);
+    const height=Math.max(y+12,actorSizes.reduce((a,b)=>a+b,64));
+    host.replaceChildren();
+    const svg=svgAdd(host,'svg',{viewBox:`0 0 ${width} ${height}`,role:'img','aria-label':view.title});
+    svgAdd(svg,'title',{},view.title);
+    svgAdd(svg,'desc',{},view.cases.map(uc=>`${uc.id}: ${uc.label} — ${labels[uc.status]}`).join('; '));
+    svgAdd(svg,'rect',{x:left,y:8,width:right-left,height:height-16,class:'ucd-structure'});
+    svgText(svg,center,30,systemLines,true);
+    const positions=new Map(); let ay=58;
+    view.actors.forEach((id,i)=>{
+      positions.set(id,ay+20);const group=svgAdd(svg,'g',{'data-actor-id':id});
+      svgAdd(group,'circle',{cx:48,cy:ay,r:9,class:'ucd-actor'});
+      svgAdd(group,'path',{d:`M48 ${ay+9}v28 M30 ${ay+22}h36 M48 ${ay+37}l-16 23 M48 ${ay+37}l16 23`,class:'ucd-actor'});
+      svgText(group,48,ay+78,actorLines[i]);ay+=actorSizes[i];
+    });
+    // Associations are behind the ellipses, with no workflow arrows.
+    cases.forEach(({uc,cy})=>uc.actors.forEach(id=>svgAdd(svg,'path',{
+      d:`M70 ${positions.get(id)} L${center-rx} ${cy}`,class:'ucd-structure','data-association':`${id}:${uc.id}`
+    })));
+    cases.forEach(({uc,lines,cy,ry})=>{
+      const group=svgAdd(svg,'g',{class:`ucd-case ucd-${uc.status}`,'data-case-id':uc.id});
+      svgAdd(group,'ellipse',{cx:center,cy,rx,ry});
+      svgText(group,center,cy-(lines.length-1)*9,lines);
+    });
+  };
+  const tabs=root.querySelector('[data-tabs]'), panels=root.querySelector('[data-panels]');
+  const entries=[];
+  data.views.forEach((view,i)=>{
+    const tabId=`__ROOT__-tab-${i}`, panelId=`__ROOT__-panel-${i}`;
+    const button=add(tabs,'button',view.title,{type:'button',role:'tab',id:tabId,
+      class:`nav-link${i?'':' active'}`,'aria-controls':panelId,'aria-selected':String(i===0)});
+    const panel=add(panels,'section',null,{role:'tabpanel',id:panelId,'aria-labelledby':tabId});
+    panel.hidden=i!==0;
+    const canvas=add(panel,'div',null,{class:'ucd-canvas'});
+    const details=add(panel,'details',null);
+    add(details,'summary',labels.traceability);
+    for(const uc of view.cases) {
+      const block=add(details,'div',null,{class:'ucd-trace'});
+      add(block,'h3',`${uc.id} · ${uc.label} — ${labels[uc.status]}`);
+      const dl=add(block,'dl',null);
+      add(dl,'dt',labels.requirements);add(dl,'dd',uc.requirements.map(id=>`${id} · ${requirements.get(id).source}`).join('; ')||labels.no_requirements);
+      add(dl,'dt',labels.tasks);add(dl,'dd',uc.tasks.map(t=>`${t.id} (${t.status}${t.superseded?', superseded':''}) · ${t.source}`).join('; ')||'—');
+      add(dl,'dt',labels.evidence);
+      uc.evidence.forEach(e=>add(dl,'dd',`${e.kind} · ${e.source} · ${e.locator}: ${e.detail}`));
+      if(uc.notes){add(dl,'dt',labels.notes);add(dl,'dd',uc.notes);}
+    }
+    entries.push({button,panel,canvas,view});
+    button.addEventListener('click',()=>{
+      entries.forEach(e=>{const active=e.button===button;e.panel.hidden=!active;
+        e.button.setAttribute('aria-selected',String(active));e.button.classList.toggle('active',active);});
+      draw(canvas,view);
+    });
+    draw(canvas,view);
+    if(typeof ResizeObserver!=='undefined') new ResizeObserver(()=>draw(canvas,view)).observe(canvas);
+  });
+})();
+</script>

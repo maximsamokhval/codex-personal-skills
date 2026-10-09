@@ -1,0 +1,4 @@
+interface:
+  display_name: "UCD Status"
+  short_description: "Current use cases with evidence and traceability"
+  default_prompt: "Use $ucd-status to show the current use case diagrams with requirement, code, test, and task traceability."
