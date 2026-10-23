@@ -12,6 +12,7 @@
 | [`requirements-critic`](skills/requirements-critic/) | знайти дефекти, суперечності та прогалини у вимогах |
 | [`decision-register`](skills/decision-register/) | зібрати рішення й призначення власників, прив'язані до вимог і критики |
 | [`specification-compiler`](skills/specification-compiler/) | перетворити затверджені вимоги на інваріанти, критерії приймання та сценарії відмов |
+| [`critical-code-verification`](skills/critical-code-verification/) | спроєктувати й реалізувати перевірки критичних властивостей Python-коду |
 | [`youtrack-mermaid`](skills/youtrack-mermaid/) | створити або оновити Mermaid-схему в статті YouTrack |
 | [`iso-29148-requirements`](skills/iso-29148-requirements/) | витягнути, нормалізувати та трасувати вимоги за практичною методикою ISO/IEC/IEEE 29148 |
 | [`quint-formal-modeling`](skills/quint-formal-modeling/) | створити або рецензувати виконувану Quint-модель поведінки |
@@ -63,6 +64,12 @@
 Створює `decision-register.json` і похідний `decision-register.md` із явним охопленням вимог, відкритих питань і положень джерела. Перевіряє SHA-256 обох входів, повноту ID та підстави для прийнятих чи тимчасових рішень.
 
 **Мініприклад:** `Використай $decision-register для поточних requirements.json і review.json; підготуй реєстр рішень для нових вимог, залиш непідтверджене pending.`
+
+### `critical-code-verification`
+
+Знаходить критичні властивості Python-коду, формулює інваріанти й підбирає мінімально достатній спосіб перевірки: CrossHair, Deal, Hypothesis, stateful-тести або Atheris. За замовчуванням тримає важкі перевірки окремо від робочого коду, а контракти в production пропонує лише для коротких стабільних правил і після погодження. У звіті розрізняє знайдений контрприклад, перевірені приклади, обмежений пошук без контрприкладу та формальне доведення в межах моделі.
+
+**Мініприклад:** `Використай $critical-code-verification: знайди критичні властивості нового алгоритму розподілу коштів, запропонуй план перевірок і не змінюй production-код без погодження.`
 
 ### `youtrack-mermaid`
 
