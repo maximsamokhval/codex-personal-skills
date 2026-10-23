@@ -25,17 +25,35 @@ Infer the mode from the request:
    - observable oracle or reference model;
    - excluded behavior and side effects;
    - proposed method, location, and execution budget.
-4. Read [references/tool-selection.md](references/tool-selection.md), then choose the minimum set of complementary methods. Do not apply every tool by default.
-5. Place checks separately by default. Use the project's existing layout when present; otherwise prefer:
+4. Read [references/tool-selection.md](references/tool-selection.md), then assign exactly one primary tool and check kind to every property. Add a secondary tool only when it supplies a different kind of evidence. Do not apply every tool by default.
+5. Produce the mandatory selection matrix below before changing code. A list of possible tools without a recommendation is incomplete.
+6. Place checks separately by default. Use the project's existing layout when present; otherwise prefer:
    - `tests/properties/` for Hypothesis properties;
    - `tests/stateful/` for state machines;
    - `verification/crosshair/` for symbolic wrappers;
    - `verification/fuzz/` and `verification/corpus/` for fuzz targets and seeds.
-6. Propose a production contract only when it is short, stable, part of the public or domain behavior, and useful at runtime or as API documentation. Show this change separately and obtain explicit approval before adding a contract dependency or modifying production code solely for verification.
-7. Obtain explicit approval before installing dependencies, starting containers or WSL, enabling network access, or scheduling a long-running check. Prefer the project's existing environment and commands.
-8. Run a bounded check appropriate to the risk. Record the tool version, target, budget, assumptions, and exact outcome.
-9. When a counterexample is found, reduce it when the tool has not already done so, explain the violated property, and add a deterministic regression test when the user requested implementation.
-10. After a check runs, report one evidence status from the list below. In design mode use execution state `planned-not-run` instead. Never collapse an inconclusive or bounded search into “proved.”
+7. Propose a production contract only when it is short, stable, part of the public or domain behavior, and useful at runtime or as API documentation. Show this change separately and obtain explicit approval before adding a contract dependency or modifying production code solely for verification.
+8. Obtain explicit approval before installing dependencies, starting containers or WSL, enabling network access, or scheduling a long-running check. Prefer the project's existing environment and commands.
+9. Run a bounded check appropriate to the risk. Record the tool version, target, budget, assumptions, and exact outcome.
+10. When a counterexample is found, reduce it when the tool has not already done so, explain the violated property, and add a deterministic regression test when the user requested implementation.
+11. After a check runs, report one evidence status from the list below. In design mode use execution state `planned-not-run` instead. Never collapse an inconclusive or bounded search into “proved.”
+
+## Mandatory selection matrix
+
+Every Design, Implement, and Assess result must include one row per critical property:
+
+| Block and risk | Property and assumptions | Check kind | Primary tool | Why this tool | Secondary tool | Why not the alternatives | Location | Repeat command | Budget | Success means | State |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+
+Apply these rules:
+
+- Name a concrete check kind: example unit, property-based, differential, stateful, symbolic, proof, runtime contract, or fuzz.
+- Select exactly one primary tool, including the project's ordinary test runner when it is sufficient.
+- Use `none` for the secondary tool unless it adds independent evidence; explain that evidence when selected.
+- Briefly reject the plausible alternatives. Do not pad the row with tools that were never credible candidates.
+- Give an exact file and command when the project is known. In design-only work with missing context, mark them as proposed templates.
+- Explain the strength of success: examples passed, no counterexample within a budget, runtime enforcement, or proof within a model.
+- When a missing fact changes the choice, name that fact and create a separate condition-labelled row for each branch instead of combining recommendations or saying only “it depends.”
 
 ## Production-code boundary
 
@@ -59,13 +77,12 @@ Only use `proved-within-model` for an actual successful proof result, such as a 
 
 ## Result
 
-For each critical property, return a compact record with:
+After the matrix, summarize:
 
-- block and risk;
-- property, assumptions, and exclusions;
-- tool and check location;
-- execution budget;
-- execution state or evidence status, plus the minimal counterexample if any;
-- files changed and the exact repeat command, or a clearly marked command template when the project environment is unknown.
+1. checks required now;
+2. checks deferred to a longer run or CI;
+3. tools that are unnecessary and why;
+4. approvals needed for production contracts, dependencies, WSL or containers, network access, or long runs;
+5. files changed and minimal counterexamples converted into regression tests.
 
-Distinguish completed local evidence from checks that were proposed, skipped, or left for CI.
+In Design mode, report changed files and converted counterexamples as `not applicable`. Distinguish completed local evidence from checks that were proposed, skipped, or left for CI.

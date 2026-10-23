@@ -1,4 +1,4 @@
 interface:
   display_name: "Critical Code Verification"
   short_description: "Verify critical Python properties by risk"
-  default_prompt: "Use $critical-code-verification to identify and verify the critical properties of this Python change."
+  default_prompt: "Use $critical-code-verification to produce a concrete tool-selection matrix and verify the critical properties of this Python change."
