@@ -2,6 +2,8 @@
 
 Choose from the shape of the property and code. Make a decision for every property; do not return a menu. Combine methods only when they provide different evidence.
 
+The tool coverage verdict and the property matrix answer different questions. The verdict accounts explicitly for the whole core specialist toolkit; the matrix selects only the checks that fit actual properties. A specific `not-applicable` verdict is a valid decision, while omitting a core tool is incomplete.
+
 ## Decision procedure
 
 Use the first specific branch that matches the evidence the property needs:
